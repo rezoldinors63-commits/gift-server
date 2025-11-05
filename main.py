@@ -13,8 +13,8 @@ from telegram import (
 )
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-BOT_TOKEN = "ТОКЕН_ТВОЕГО_БОТА"
-WEBAPP_URL = "https://jackpot-server.onrender.com"  # ссылка на Render
+BOT_TOKEN = "8323701736:AAH7U-bVDOd-hgbbDtwQw7sHNv4Fn7gCI-4"
+WEBAPP_URL = "https://gift-server-vyai.onrender.com"  # ссылка на Render
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
