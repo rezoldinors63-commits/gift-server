@@ -51,6 +51,29 @@ def create_user(user: UserCreate):
     db.execute(
         "INSERT INTO users (tg_id, username) VALUES (%s, %s) ON CONFLICT (tg_id) DO NOTHING",
         (user.tg_id, user.username or "anonymous")
+
+        from fastapi import Request
+from supabase import create_client
+import os
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+@app.post("/auth")
+async def auth_user(request: Request):
+    data = await request.json()
+    tg_data = data.get("tg_data", {})
+    user_id = tg_data.get("id")
+    username = tg_data.get("username")
+
+    # Проверяем, есть ли пользователь в базе
+    user = supabase.table("users").select("*").eq("id", user_id).execute()
+    if not user.data:
+        supabase.table("users").insert({"id": user_id, "username": username, "balance": 0}).execute()
+
+    return {"status": "ok", "user": tg_data}
+
     )
     db.commit()
     return {"message": "User created", "tg_id": user.tg_id}
