@@ -77,3 +77,13 @@ async def auth_user(request: Request):
     )
     db.commit()
     return {"message": "User created", "tg_id": user.tg_id}
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def serve_index():
+    return FileResponse("index.html")
+
