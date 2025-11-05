@@ -5,6 +5,29 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 import os
 
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    WebAppInfo
+)
+from telegram.ext import Application, CommandHandler, ContextTypes
+
+BOT_TOKEN = "ТОКЕН_ТВОЕГО_БОТА"
+WEBAPP_URL = "https://jackpot-server.onrender.com"  # ссылка на Render
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton("🎰 Открыть мини-игру", web_app=WebAppInfo(url=WEBAPP_URL))]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Добро пожаловать в Jackpot Mini App!", reply_markup=reply_markup)
+
+app = Application.builder().token(BOT_TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+app.run_polling()
+
+
 load_dotenv()
 
 app = FastAPI()
