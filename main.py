@@ -89,3 +89,45 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def serve_index():
     return FileResponse("index.html")
 
+from fastapi import FastAPI, Request
+from supabase import create_client
+import os
+
+app = FastAPI()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+@app.post("/deposit")
+async def deposit(request: Request):
+    data = await request.json()
+    user_id = data.get("user_id")
+    amount = float(data.get("amount", 0))
+
+    if amount <= 0:
+        return {"status": "error", "message": "Некорректная сумма"}
+
+    # Проверяем есть ли пользователь
+    user = supabase.table("users_balance").select("*").eq("user_id", user_id).execute()
+    if user.data:
+        # Обновляем баланс и выдаём тикеты (1 тикет за 10 TON, например)
+        new_balance = float(user.data[0]["balance"]) + amount
+        new_tickets = int(user.data[0]["tickets"]) + int(amount // 10)
+        supabase.table("users_balance").update({
+            "balance": new_balance,
+            "tickets": new_tickets,
+            "updated_at": "now()"
+        }).eq("user_id", user_id).execute()
+    else:
+        # Если новый пользователь
+        new_tickets = int(amount // 10)
+        supabase.table("users_balance").insert({
+            "user_id": user_id,
+            "balance": amount,
+            "tickets": new_tickets
+        }).execute()
+
+    return {"status": "ok", "balance": new_balance, "tickets": new_tickets}
+
+
