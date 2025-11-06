@@ -5,8 +5,6 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 import os
 
-pip install python-telegram-bot==20.6
-
 from telegram import (
     Update,
     InlineKeyboardButton,
