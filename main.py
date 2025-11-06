@@ -130,4 +130,9 @@ async def deposit(request: Request):
 
     return {"status": "ok", "balance": new_balance, "tickets": new_tickets}
 
+class DepositRequest(BaseModel):
+    user_id: int         # Telegram user id или внутренний id
+    amount: float        # сумма в TON (или в вашей валюте)
+    source: str = "manual"  # "cryptobot", "telegram_gift", "ton", "manual"
+    external_id: str | None = None  # id транзакции от платёжной системы (invoice id)
 
