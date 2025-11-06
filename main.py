@@ -136,3 +136,49 @@ class DepositRequest(BaseModel):
     source: str = "manual"  # "cryptobot", "telegram_gift", "ton", "manual"
     external_id: str | None = None  # id транзакции от платёжной системы (invoice id)
 
+DEPOSIT_SECRET = os.getenv("DEPOSIT_SECRET", "change_this_secret")  # в проде положи реальный секрет в env
+
+@app.post("/deposit")
+async def deposit(req: DepositRequest, x_deposit_secret: str | None = Header(None)):
+    # Простая авторизация: webhook/криптобот должен поставить правильный X-DEPOSIT-SECRET
+    if DEPOSIT_SECRET and x_deposit_secret != DEPOSIT_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    user_id = req.user_id
+    amount = round(float(req.amount), 8)
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Invalid amount")
+
+    # Логика тикетов: допустим 1 тикет за каждые 10 TON
+    TICKET_RATE = 1.0
+
+    # Получим текущую запись пользователя
+    res = supabase.table("users_balance").select("*").eq("user_id", user_id).limit(1).execute()
+    existing = res.data[0] if res.data else None
+
+    if existing:
+        # Обновляем баланс и тикеты
+        current_balance = float(existing.get("balance", 0))
+        current_tickets = int(existing.get("tickets", 0))
+        new_balance = round(current_balance + amount, 8)
+        added_tickets = int((current_balance + amount) // TICKET_RATE) - int(current_balance // TICKET_RATE)
+        # проще: выдаём тикеты по сумме пополнения
+        added_tickets = int(amount // TICKET_RATE)
+        new_tickets = current_tickets + added_tickets
+
+        update = {"balance": new_balance, "tickets": new_tickets}
+        supabase.table("users_balance").update(update).eq("user_id", user_id).execute()
+    else:
+        # Создаём запись
+        new_balance = amount
+        new_tickets = int(amount // TICKET_RATE)
+        supabase.table("users_balance").insert({
+            "user_id": user_id,
+            "balance": new_balance,
+            "tickets": new_tickets
+        }).execute()
+
+    return {"status": "ok", "user_id": user_id, "balance": new_balance, "tickets": new_tickets}
+os.getenv("SUPABASE_URL")
+
+
