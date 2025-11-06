@@ -181,4 +181,7 @@ async def deposit(req: DepositRequest, x_deposit_secret: str | None = Header(Non
     return {"status": "ok", "user_id": user_id, "balance": new_balance, "tickets": new_tickets}
 os.getenv("SUPABASE_URL")
 
+print("SUPABASE_URL =", os.getenv("SUPABASE_URL"))
+print("SUPABASE_KEY =", os.getenv("SUPABASE_KEY")[:8] + "...")  # только первые символы
+print("DEPOSIT_SECRET =", os.getenv("DEPOSIT_SECRET"))
 
